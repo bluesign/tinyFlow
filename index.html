@@ -1,0 +1,105 @@
+ <!doctype html>
+ <html>
+ 	<head>
+ 		<meta charset="utf-8"/>
+ 		<script src="wasm_exec.js"></script>
+ 		<script>
+    
+      window.runtime = {
+
+          ledger: new Map(),
+
+          getValue: function(owner, key) {
+            window.info("get value: " + owner.toString() + key.toString());
+            return this.ledger.get(owner.toString()+key.toString());
+          },
+
+          setValue: function(owner, key, value) {
+            window.info("set value: " + owner.toString() + key.toString() + " = " + value);
+            this.ledger.set(owner.toString()+key.toString(), value);
+          },
+
+          log: function(msg) {
+            window.info("Cadence: " + msg);
+          }
+
+        };
+
+        window.info = function(msg){
+            document.write("<pre>" , msg.replaceAll("\\n", "<br>"));
+           document.write("</pre><br>");
+
+        }
+        			var go = new Go();
+ 			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+ 				go.run(result.instance);
+
+       var  transaction = { 
+          script: `
+          transaction {
+            prepare(signer: auth(Storage) &Account) {
+              log(signer);
+              log("Hello, World!");
+              signer.storage.save("tinyFlow", to: /storage/tiny);
+            }
+          }
+     `,
+     referenceBlockId: "0000000000000001",
+     proposalKey:{
+       address: "0000000000000001",
+       keyIndex: 1,
+       sequenceNumber: 1,
+     },
+     authorizers: ["0000000000000001"],
+
+    };
+
+        window.info("send transaction 1");
+        window.info(JSON.stringify(transaction, undefined, 2));
+
+
+     window.sendTransaction(transaction);
+
+
+
+       var  transaction2 = { 
+          script: `
+          transaction {
+            prepare(signer: auth(Storage) &Account) {
+              log("Transaction 2");
+              var msg = signer.storage.load<String>(from: /storage/tiny);
+              log(msg)
+            }
+          }
+     `,
+     referenceBlockId: "0000000000000001",
+     proposalKey:{
+       address: "0000000000000001",
+       keyIndex: 1,
+       sequenceNumber: 1,
+     },
+     authorizers: ["0000000000000001"],
+
+    };
+
+        window.info("send transaction 2");
+        window.info(JSON.stringify(transaction2, undefined, 2));
+
+
+     window.sendTransaction(transaction2);
+
+
+
+			});
+
+		</script>
+	</head>
+	<body>
+
+
+  <script>
+
+    </script>
+
+</body>
+</html>
